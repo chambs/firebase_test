@@ -1,0 +1,35 @@
+{
+  "name": "firebase_test",
+  "version": "1.0.0",
+  "description": "taking a look at firebase",
+  "main": "index.js",
+  "watch": {
+    "build": {
+      "patterns": ["src"],
+      "extensions": ["js", "html"]
+    }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean_dist": "rm -rf ./dist/*",
+    "copy_to_dist": "cp -R ./src/* ./dist",
+    "serve": "./node_modules/.bin/http-server ./dist",
+    "build": "npm run clean_dist && npm run copy_to_dist",
+    "watch": "npm-watch &",
+    "start": "npm run build && npm run watch && npm run serve"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chambs/firebase_test.git"
+  },
+  "author": "Willian Carvalho",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chambs/firebase_test/issues"
+  },
+  "homepage": "https://github.com/chambs/firebase_test#readme",
+  "devDependencies": {
+    "http-server": "^0.9.0",
+    "npm-watch": "^0.1.6"
+  }
+}
