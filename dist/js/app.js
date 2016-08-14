@@ -51,7 +51,7 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 
 	var _firebase = __webpack_require__(2);
 
@@ -59,20 +59,73 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	console.log(_firebase2.default);
+	var data,
+	    result = document.querySelector('#result');
 
+	function appendToHTML(str) {
+	  result.innerHTML += str;
+	}
+
+	_firebase2.default.onAuthStateChanged(function (user) {
+	  if (user) {
+	    appendToHTML('Reading data as user ' + user.email + '<br><br>');
+
+	    _firebase2.default.readData(function (data) {
+	      for (var k in data) {
+	        appendToHTML(data[k].title + ' - ' + data[k].url + '<br>');
+	      }
+	    });
+	  } else {
+	    console.log('ate passou aqui, mas o user tava null');
+	    _firebase2.default.doAuth();
+	  }
+	});
+
+	_firebase2.default.initFirebase();
+
+/***/ },
+/* 2 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
 	// Initialize Firebase
+
+	/** SIMPLE FIREBASE RULES SO ONLY SOME USERS CAN SEE AND ADD STUFF:
+
+	{
+	  "rules": {
+	    ".read": "auth != null && (auth.isAdmin == true || auth.token.email == 'o.chambs@gmail.com')",
+	    ".write": "auth != null && (auth.token.email.matches(/@castlabs.com$/) || auth.token.email == 'o.chambs@gmail.com')"
+	  }
+	}
+	*/
+
+	// REPLACE HERE WITH YOUR OWN FIREBASE INFO
 	var config = {
 	  apiKey: "AIzaSyCAWx8dooTve1pnXXEuFmWWUjVMOdgP6p0",
 	  authDomain: "cmstest-624a1.firebaseapp.com",
 	  databaseURL: "https://cmstest-624a1.firebaseio.com",
 	  storageBucket: "cmstest-624a1.appspot.com"
-	};
-	firebase.initializeApp(config);
+	},
+	    database,
+	    streams,
+	    user = null,
+	    authStateChanged = function authStateChanged() {};
 
-	var database = firebase.database();
-	var streams = database.ref('streams');
-	var user = null;
+	function initFirebase() {
+	  firebase.initializeApp(config);
+	  database = firebase.database();
+	  streams = database.ref('streams');
+	  firebase.auth().onAuthStateChanged(authStateChanged);
+	}
+
+	function onAuthStateChanged(cb) {
+	  authStateChanged = cb;
+	}
 
 	function addStream(data) {
 	  stream.push({ title: 'new manifest file', url: 'http://myurl.com/Manifest.mpd' }).then(function (data) {
@@ -83,24 +136,18 @@
 	}
 
 	// list data once from snapshot
-	function readData() {
+	function readData(cb) {
 	  streams.once('value').then(function (data) {
-	    console.log('data!', data);
+	    cb(data.val());
+	    window.lero = data;
 	  }).catch(function (err) {
 	    console.log('error', err);
 	  });
 	}
 
-	readData();
-
 	function readUser() {
 	  firebase.auth().currentUser;
 	}
-
-	firebase.auth().onAuthStateChanged(function (_user) {
-	  user = _user;
-	  console.log('user', user.email);
-	});
 
 	//authenticate user with google as a provider
 	function doAuth() {
@@ -115,16 +162,12 @@
 	  });
 	}
 
-/***/ },
-/* 2 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = {
-	  a: function a() {
-	    return 'hi';
-	  }
+	exports.default = {
+	  doAuth: doAuth,
+	  initFirebase: initFirebase,
+	  onAuthStateChanged: onAuthStateChanged,
+	  readData: readData,
+	  readUser: readUser
 	};
 
 /***/ }

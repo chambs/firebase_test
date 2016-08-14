@@ -1,59 +1,27 @@
-import Firebase from './firebase';
+import fb from './firebase';
 
-console.log(Firebase);
 
-  // Initialize Firebase
-  var config = {
-    apiKey: "AIzaSyCAWx8dooTve1pnXXEuFmWWUjVMOdgP6p0",
-    authDomain: "cmstest-624a1.firebaseapp.com",
-    databaseURL: "https://cmstest-624a1.firebaseio.com",
-    storageBucket: "cmstest-624a1.appspot.com",
-  };
-  firebase.initializeApp(config);
+var data,
+    result = document.querySelector('#result');
 
-  var database = firebase.database();
-  var streams = database.ref('streams');
-  var user = null;
+function appendToHTML (str) {
+  result.innerHTML += str;
+}
 
-  function addStream (data) {
-    stream.push({title: 'new manifest file', url: 'http://myurl.com/Manifest.mpd'})
-    .then( (data) => {
-      console.log('success', data);
-    }).catch( (woot) => {
-      console.log('failure', woot);
+fb.onAuthStateChanged((user) => {
+  if (user) {
+    appendToHTML('Reading data as user ' + user.email + '<br><br>');
+
+    fb.readData((data) => {
+      for (let k in data) {
+        appendToHTML(data[k].title + ' - ' + data[k].url + '<br>');
+      }
     });
+  } else {
+    console.log('ate passou aqui, mas o user tava null');
+    fb.doAuth();
   }
+});
 
-  // list data once from snapshot
-  function readData () {
-    streams.once('value').then(function (data) {
-      console.log('data!', data);
-    }).catch(function (err) {
-      console.log('error', err);
-    });
-  }
+fb.initFirebase();
 
-  readData();
-
-  function readUser () {
-    firebase.auth().currentUser;
-  }
-  
-  firebase.auth().onAuthStateChanged(function (_user) {
-    user = _user;
-    console.log('user', user.email);
-  });
-
-  //authenticate user with google as a provider
-  function doAuth() {
-    var provider = new firebase.auth.GoogleAuthProvider();
-
-    firebase.auth().signInWithPopup(provider)
-    .then(function (result) {
-      var token = result.credential.accessToken;
-      user = result.user;
-      console.log('yay, user logged');
-    }).catch(function () {
-      console.log('authentication failed');
-    });
-  }
