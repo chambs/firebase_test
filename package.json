@@ -5,14 +5,19 @@
   "main": "index.js",
   "watch": {
     "build": {
-      "patterns": ["src"],
-      "extensions": ["js", "html"]
+      "patterns": [
+        "src"
+      ],
+      "extensions": [
+        "js",
+        "html"
+      ]
     }
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean_dist": "rm -rf ./dist/*",
-    "copy_to_dist": "cp -R ./src/* ./dist",
+    "copy_to_dist": "cp -R ./src/* ./dist && ./webpack",
     "serve": "./node_modules/.bin/http-server ./dist",
     "build": "npm run clean_dist && npm run copy_to_dist",
     "watch": "npm-watch &",
@@ -29,7 +34,13 @@
   },
   "homepage": "https://github.com/chambs/firebase_test#readme",
   "devDependencies": {
+    "babel-core": "^6.13.2",
+    "babel-loader": "^6.2.4",
+    "babel-preset-es2015": "^6.13.2",
+    "bootstrap-loader": "^1.2.0-beta.1",
+    "bootstrap-webpack": "0.0.5",
     "http-server": "^0.9.0",
-    "npm-watch": "^0.1.6"
+    "npm-watch": "^0.1.6",
+    "webpack": "^1.13.1"
   }
 }
