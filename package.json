@@ -17,7 +17,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean_dist": "rm -rf ./dist/*",
-    "copy_to_dist": "cp -R ./src/* ./dist && ./webpack",
+    "copy_to_dist": "rsync -av --progress ./src/ ./dist --exclude '*.js' && ./webpack",
+    "old_copy": "cp ./src/index.html ./dist && ./webpack",
     "serve": "./node_modules/.bin/http-server ./dist",
     "build": "npm run clean_dist && npm run copy_to_dist",
     "watch": "npm-watch &",
