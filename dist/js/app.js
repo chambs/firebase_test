@@ -62,7 +62,31 @@
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	var data,
-	    result = document.querySelector('#result');
+	    result = document.querySelector('#result'),
+	    btnLogin = document.querySelector('[data-id="btn_login"]'),
+	    streamList = document.querySelector('#stream_list'),
+	    controls = document.querySelector('#controls'),
+	    streamTitle = document.querySelector('[name="stream_title"]'),
+	    streamUrl = document.querySelector('[name="stream_url"]'),
+	    _user = '',
+	    firstTimeRead = false;
+
+	//event binding
+	result.addEventListener('click', function (ev) {
+	  var target = ev.target || ev.srcElement;
+
+	  switch (target.getAttribute('data-id')) {
+	    case 'btn_login':
+	      _firebase2.default.doAuth();
+	      break;
+	    case 'btn_add_stream':
+	      _firebase2.default.addStream({
+	        title: streamTitle.value,
+	        url: streamUrl.value
+	      });
+	      break;
+	  }
+	}, false);
 
 	function appendToHTML(str) {
 	  result.innerHTML += str;
@@ -70,19 +94,41 @@
 
 	_firebase2.default.onAuthStateChanged(function (user) {
 	  if (user) {
-	    // appendToHTML('Reading data as user ' + user.email + '<br><br>');
-
-
-	    _firebase2.default.readData(function (data) {
-	      (0, _renders.appendTitle)('Reading data as user ' + user.email, data);
-
-	      // for (let k in data) {
-	      //   appendToHTML(data[k].title + ' - ' + data[k].url + '<br>');
-	      // }
-	    });
+	    _user = user;
+	    controls.className = controls.className.replace(/hidden/, '');
 	  } else {
-	    console.log('ate passou aqui, mas o user tava null');
-	    _firebase2.default.doAuth();
+	    btnLogin.className = btnLogin.className.replace(/hidden/, '');
+	  }
+	});
+
+	_firebase2.default.onceValueRead(function (data) {
+	  var li;
+	  document.querySelector('#title').textContent = 'Reading data as user ' + _user.email;
+
+	  for (var k in data) {
+	    li = (0, _renders.domElement)('li', {
+	      text: data[k].title + ' - ' + data[k].url,
+	      className: 'link',
+	      id: k
+	    });
+
+	    streamList.appendChild(li);
+	  }
+	  firstTimeRead = true;
+	});
+
+	// after the first time all data is read, we start listen to child_added
+	_firebase2.default.onDataAdded(function (data) {
+	  var li;
+	  if (firstTimeRead) {
+	    li = (0, _renders.domElement)('li', {
+	      text: data.val().title + ' - ' + data.val().url,
+	      className: 'link',
+	      id: data.key
+	    });
+	    streamList.appendChild(li);
+	    streamTitle.value = '';
+	    streamUrl.value = '';
 	  }
 	});
 
@@ -119,35 +165,40 @@
 	    database,
 	    streams,
 	    user = null,
-	    authStateChanged = function authStateChanged() {};
+	    authStateChanged = function authStateChanged() {},
+	    onceValue = function onceValue() {},
+	    dataAdded = function dataAdded() {};
 
 	function initFirebase() {
 	  firebase.initializeApp(config);
 	  database = firebase.database();
 	  streams = database.ref('streams');
 	  firebase.auth().onAuthStateChanged(authStateChanged);
+
+	  streams.once('value').then(function (data) {
+	    onceValue(data.val());
+	  }).catch(function (err) {
+	    console.log('error', err);
+	  });
+
+	  streams.on('child_added', dataAdded);
 	}
 
 	function onAuthStateChanged(cb) {
 	  authStateChanged = cb;
 	}
 
-	function addStream(data) {
-	  stream.push({ title: 'new manifest file', url: 'http://myurl.com/Manifest.mpd' }).then(function (data) {
-	    console.log('success', data);
-	  }).catch(function (woot) {
-	    console.log('failure', woot);
-	  });
+	function onceValueRead(cb) {
+	  onceValue = cb;
 	}
 
-	// list data once from snapshot
-	function readData(cb) {
-	  streams.once('value').then(function (data) {
-	    cb(data.val());
-	    window.lero = data;
-	  }).catch(function (err) {
-	    console.log('error', err);
-	  });
+	function onDataAdded(cb) {
+	  dataAdded = cb;
+	}
+
+	function addStream(newData) {
+	  // {title: 'new manifest file', url: 'http://myurl.com/Manifest.mpd'}
+	  streams.push(newData);
 	}
 
 	function readUser() {
@@ -161,18 +212,16 @@
 	  firebase.auth().signInWithPopup(provider).then(function (result) {
 	    var token = result.credential.accessToken;
 	    user = result.user;
-	    console.log('yay, user logged');
-	  }).catch(function () {
-	    console.log('authentication failed');
-	  });
+	  }).catch(function (err) {});
 	}
 
 	exports.default = {
 	  doAuth: doAuth,
 	  initFirebase: initFirebase,
 	  onAuthStateChanged: onAuthStateChanged,
-	  readData: readData,
-	  readUser: readUser
+	  onceValueRead: onceValueRead,
+	  addStream: addStream,
+	  onDataAdded: onDataAdded
 	};
 
 /***/ },
@@ -184,6 +233,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	exports.domElement = domElement;
 	exports.appendTitle = appendTitle;
 
 	var _react = __webpack_require__(4);
@@ -195,6 +245,33 @@
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	// render functions
+	function domElement(element) {
+	  var properties = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+	  var el, txt, eventName;
+
+	  if (element === 'text') {
+	    el = document.createTextNode();
+	  } else {
+	    el = document.createElement(element);
+	  }
+
+	  for (var k in properties) {
+	    if (k === 'text') {
+	      txt = document.createTextNode(properties[k]);
+	      el.appendChild(txt);
+	    } else if (k.match(/^on/)) {
+	      eventName = k.substr(2).replace(/^(.)/, function (a) {
+	        return a.toLowerCase();
+	      });
+	      el.addEventListener(eventName, properties[k], false);
+	    } else {
+	      el[k] = properties[k];
+	    }
+	  }
+	  return el;
+	}
+
 	var Header = _react2.default.createClass({
 	  displayName: 'Header',
 

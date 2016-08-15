@@ -4,10 +4,21 @@
     <title>firebase test</title>
     <!-- using webpack to import this is annoying -->
     <link rel="stylesheet" type="text/css" href="./css/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="./css/style.css">
 </head>
 <body>
 
-<div id="result"></div>
+<div id="result">
+  <button class="btn login hidden" data-id="btn_login">Login</button>
+  <h3 id="title"></h3>
+  <div id="controls" class="hidden">
+    <input type="text" name="stream_title" placeholder="Stream title">
+    <input type="text" name="stream_url" placeholder="Stream URL">
+    <button data-id="btn_add_stream">Add stream</button>
+  </div>
+
+  <ul id="stream_list"></ul>
+</div>
 
 <!-- using webpack to import this is annoying -->
 <script src="https://www.gstatic.com/firebasejs/3.1.0/firebase-app.js"></script>

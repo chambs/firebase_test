@@ -1,0 +1,16 @@
+.hidden {
+  display: none;
+}
+
+#controls {
+  
+}
+
+.link {
+  color: #00f;
+  cursor: pointer;
+}
+
+#stream_list {
+  list-style: none;
+}

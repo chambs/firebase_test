@@ -20,36 +20,41 @@ var config = {
     database,
     streams,
     user = null,
-    authStateChanged = function () {};
+    authStateChanged = function () {},
+    onceValue = function () {},
+    dataAdded = function () {};
 
 function initFirebase () {
   firebase.initializeApp(config);
   database = firebase.database();
   streams = database.ref('streams');
   firebase.auth().onAuthStateChanged(authStateChanged);
+
+  streams.once('value')
+  .then((data) => {
+    onceValue(data.val());
+  }).catch((err) => {
+    console.log('error', err);
+  });
+
+  streams.on('child_added', dataAdded);
 }
 
 function onAuthStateChanged (cb) {
   authStateChanged = cb;
 }
 
-function addStream (data) {
-  stream.push({title: 'new manifest file', url: 'http://myurl.com/Manifest.mpd'})
-  .then( (data) => {
-    console.log('success', data);
-  }).catch( (woot) => {
-    console.log('failure', woot);
-  });
+function onceValueRead (cb) {
+  onceValue = cb;
 }
 
-// list data once from snapshot
-function readData (cb) {
-  streams.once('value').then((data) => {
-    cb(data.val());
-    window.lero = data;
-  }).catch((err) => {
-    console.log('error', err);
-  });
+function onDataAdded (cb) {
+  dataAdded = cb;
+}
+
+function addStream (newData) {
+  // {title: 'new manifest file', url: 'http://myurl.com/Manifest.mpd'}
+  streams.push(newData);
 }
 
 function readUser () {
@@ -61,12 +66,10 @@ function doAuth() {
   var provider = new firebase.auth.GoogleAuthProvider();
 
   firebase.auth().signInWithPopup(provider)
-  .then(function (result) {
+  .then((result) => {
     var token = result.credential.accessToken;
     user = result.user;
-    console.log('yay, user logged');
-  }).catch(function () {
-    console.log('authentication failed');
+  }).catch((err) => {
   });
 }
 
@@ -74,6 +77,7 @@ export default {
   doAuth,
   initFirebase,
   onAuthStateChanged,
-  readData,
-  readUser
+  onceValueRead,
+  addStream,
+  onDataAdded
 }
